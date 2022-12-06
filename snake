@@ -43,7 +43,7 @@ def score_display():
 	camera.draw("Score: " + str(int(score)), 36, "black", 65, 30) #displays the score while they're playing the game
 
 
-def snake_movement(keys):
+def snake_movement():
     global facing_right, facing_up
 
 #Need to figure out how to make the snake move continously in one direction until told otherwise
@@ -89,7 +89,7 @@ def game(keys):
     if game_on == False:
         camera.draw(snake)
         camera.draw(apple)
-        snake_movement(keys)
+        snake_movement()
     camera.display()
 
 
