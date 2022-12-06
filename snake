@@ -1,0 +1,146 @@
+
+import uvage
+import random
+from random import randrange
+
+# Global Variables ----------------------------------------------------------------
+
+score = 0
+game_on = False
+game_over = False
+game_over_screen = False
+player_name = 'z'
+scoreboard_values = []
+
+apple_x = round(random.randrange(0, 800 - 10) / 10.0) * 10.0
+apple_y = round(random.randrange(0, 800 - 10) / 10.0) * 10.0
+snake_list = []
+snake_block = 10
+facing_right = True
+facing_up = True
+
+
+# Set-up Game Objects ----------------------------------------------------------------
+camera = uvage.Camera(600, 600)
+scoreboard = uvage.from_color(300, 300, "white", 400, 400)
+button = uvage.from_color(300, 500, "red", 200, 200)
+score_table = []
+coin = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), r"coin.png")
+
+apple_image = uvage.load_sprite_sheet("apple_float.png", 2, 3)
+apple = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), apple_image[-1])
+apple.size = [50, 100]
+
+snake_body = uvage.load_sprite_sheet("snake_body.png", 1, 1) #loads the sprite sheet
+snake = uvage.from_image(200, 500, snake_body[-1]) #creates the spritebox image
+snake.size = [100, 100] #changes the size of the snake spritebox (will make it smaller later just need to see which direction it's facing for the keys)
+length_of_snake = 1
+
+
+def score_display():
+	global score
+	score = (length_of_snake - 1)
+	camera.draw("Score: " + str(int(score)), 36, "black", 65, 30) #displays the score while they're playing the game
+
+
+def snake_movement(keys):
+    global facing_right, facing_up
+
+#Need to figure out how to make the snake move continously in one direction until told otherwise
+
+    if uvage.is_pressing("right arrow"):
+        if not facing_right:        #if not facing right it flips it so that it is
+            facing_right = True
+            snake.flip()
+        snake.x += 10
+        snake.y -= 0
+    elif uvage.is_pressing("left arrow"):
+        if facing_right:            #flips snake body to be facing in the left direction
+            facing_right = False
+            snake.flip()
+        snake.x -= 10
+        snake.y += 0
+    elif uvage.is_pressing("up arrow"):
+        if not facing_up:   #IMPORTANT: Still needs work, can't figure out how to flip/rotate up and down---------
+            facing_up = True
+            snake.rotate(180)
+            snake.flip()
+        snake.y -= 10
+        snake.x += 0
+    elif uvage.is_pressing("down arrow"):
+        if facing_up:   #IMPORTANT: Still needs work, can't figure out how to flip/rotate up and down---------
+            facing_up = False
+            snake.rotate(180)
+            snake.flip()
+        snake.y += 10
+        snake.x -= 0
+
+#everything after here is kinda janky
+
+def game(keys):
+    global game_on, game_over, score, apple_x, apple_y, snake, length_of_snake
+    snake_x = 1
+    snake_y = 1
+
+    apple_x = random.randint(20, 800 / 2)
+    apple_y = random.randint(20, 800 / 2)
+    head = []
+
+    if game_on == False:
+        camera.draw(snake)
+        camera.draw(apple)
+        snake_movement(keys)
+    camera.display()
+
+
+"""
+    if snake.left_touches(apple) or snake.right_touches(apple) or snake.bottom_touches(apple) or snake.top_touches(apple):
+        length_of_snake += 1
+        #not really sure what to do with this part...?
+
+    if len(snake_list) > length_of_snake:
+        del snake_list[0]
+
+    if head in snake_list[:-1]:
+        game_over = True
+
+    if snake_x < 0 or snake_x > 800 or snake_y < 0 or snake_y > 800:
+        game_over = True
+
+    x1 = 800 / 2
+    y1 = 800 / 2
+
+    if x1 >= 800 or x1 < 0 or y1 >= 800 or y1 < 0:
+        game_over = True
+
+    x1 += snake.x
+    y1 += snake.y
+
+    camera.draw(apple)
+    snake_head = []
+    snake_head.append(x1)
+    snake_head.append(y1)
+    snake_list.append(snake_head)
+    if len(snake_list) > length_of_snake:
+        del snake_list[0]
+
+        for x in snake_list[:-1]:
+            if x == snake_head:
+                game_close = True"""
+
+
+if game_over == True:
+    camera.draw("GAME OVER", 50, 'red', 150, 250)
+
+camera.clear("light blue")
+camera.draw(snake)
+"""
+handle_coin()
+handle_gameover()
+handle_gameover_screen()
+"""
+score_display()
+camera.display()
+
+# Run Game ----------------------------------------------------------------
+uvage.timer_loop(30, game)
