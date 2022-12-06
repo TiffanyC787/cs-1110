@@ -108,10 +108,12 @@ def create_score_table(values):
         score_table.append(entry_diplay)
         rank += 1
         entries += 1
-
+        
     return
 
-# Collectibles -------------------------------
+
+# Collectibles -------------------------------------------------------------------------
+
 
 def handle_coin():
     global score, coin
@@ -121,8 +123,9 @@ def handle_coin():
     if coin.touches(snake_head):
         coin = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), r'Snake Sprite Sheets\coin.png')
         score += 100
-
+        
     return
+
 
 def handle_freeze():
     global score, tick_rate, freeze
@@ -134,6 +137,7 @@ def handle_freeze():
         freeze_image = uvage.load_sprite_sheet(r'Snake Sprite Sheets\freeze_float.png', 2, 3)
         freeze = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), freeze_image[-1])
         tick_rate*.5 
+        
 #IMPORTANT-------- figure out how to slow down by half for ONLY 5 SECS..? ---------
 
     return
@@ -148,7 +152,7 @@ def handle_double():
         double_score = uvage.load_sprite_sheet(r'Snake Sprite Sheets\2xscore_float.png', 2, 3)
         double = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), double_score[-1])
         score += 200
-
+        
     return
 
 def handle_apple():
@@ -166,16 +170,18 @@ def handle_apple():
         snake_list.append(list((snake_head.x, snake_head.y)))
     else:
         snake_list.pop()
-
-
+        
     return
+
 
 def score_display():
     global score
 
     camera.draw("Score: " + str(int(score)), 36, "white", 300, 50)  # displays the score while they're playing the game
 
-# Snake --------------------------------
+
+# Snake -------------------------------------------------------------------------
+
 
 def handle_snake():
     global facing_right, facing_up, direction, game_over, change_to, snake_list, snake_head
@@ -241,7 +247,6 @@ def handle_snake():
                 game_over = True
                 store_highscore()
 
-
     return
 
 
@@ -268,7 +273,6 @@ def handle_gameover_screen():
         restart_game()
         game_over = False
 
-
     return
 
 def restart_game():
@@ -289,8 +293,10 @@ def restart_game():
                   ]
 
     return
+    
 
 # Game Code ----------------------------------------------------------------
+
 
 def game():
     global snake, current_frame, game_on
@@ -317,9 +323,10 @@ def game():
         handle_gameover_screen()
 
     camera.display()
+    
     return
 
-
 # Run Game ----------------------------------------------------------------
+
 uvage.timer_loop(tick_rate, game)
 
