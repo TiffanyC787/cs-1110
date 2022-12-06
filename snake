@@ -1,148 +1,325 @@
 
 import uvage
-import random
 from random import randrange
+import os.path
 
 # Global Variables ----------------------------------------------------------------
-
 score = 0
 game_on = False
 game_over = False
 game_over_screen = False
-player_name = 'z'
+player_name = input('Name: ')
 scoreboard_values = []
-
-apple_x = round(random.randrange(0, 800 - 10) / 10.0) * 10.0
-apple_y = round(random.randrange(0, 800 - 10) / 10.0) * 10.0
-snake_list = []
-snake_block = 10
-facing_right = True
-facing_up = True
-
+tick_rate = 20
 
 # Set-up Game Objects ----------------------------------------------------------------
 camera = uvage.Camera(600, 600)
-scoreboard = uvage.from_color(300, 300, "white", 400, 400)
-button = uvage.from_color(300, 500, "red", 200, 200)
+scoreboard = uvage.from_color(300, 300, 'white', 400, 400)
+button = uvage.from_color(300, 500, 'red', 400, 20)
 score_table = []
-coin = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), r"coin.png")
+current_frame = 0
 
-apple_image = uvage.load_sprite_sheet("apple_float.png", 2, 3)
-apple = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), apple_image[-1])
-apple.size = [50, 100]
+coin = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), r'Snake Sprite Sheets\coin.png')
 
-snake_body = uvage.load_sprite_sheet("snake_body.png", 1, 1) #loads the sprite sheet
-snake = uvage.from_image(200, 500, snake_body[-1]) #creates the spritebox image
-snake.size = [100, 100] #changes the size of the snake spritebox (will make it smaller later just need to see which direction it's facing for the keys)
-length_of_snake = 1
+freeze_image = uvage.load_sprite_sheet(r'Snake Sprite Sheets\freeze_float.png', 2, 3)
+freeze = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), freeze_image[-1])
+freeze.size = [50, 100]
 
+double_score = uvage.load_sprite_sheet(r'Snake Sprite Sheets\2xscore_float.png', 2, 3)
+double = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), double_score[-1])
+double.size = [50, 100]
+
+apple_image = uvage.load_sprite_sheet(r'Snake Sprite Sheets\apple_float.png', 3, 3)
+apple = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), apple_image[0])
+apple.size = [50, 50]
+
+snake_headsheet = uvage.load_sprite_sheet(r'Snake Sprite Sheets\snake eat.png', 2, 2)
+snake_head = uvage.from_image(300, 300, snake_headsheet[0])
+snake_head.size = [30, 30]
+
+direction = 'RIGHT'
+change_to = direction
+
+snake_body = uvage.load_sprite_sheet(r'Snake Sprite Sheets\snake_body.png', 1, 1)  # loads the sprite sheet
+
+# Start the Snake w/ 4 Body Pieces + 1 Head
+snake_list = [[300, 300],
+              [290, 300],
+              [280, 300],
+              [270, 300]
+              ]
+
+# Inter-Session Progress ----------------------------------------------------------------
+
+def store_highscore():
+
+    global player_name, score
+
+    # Checks if there is a highscore.txt file if not makes one and writes to it
+    if os.path.isfile('highscore.txt') == False:
+        file = open('highscore.txt', 'x')
+        file.write(player_name + ',' + str(score))
+        file.close()
+    # Writes to highscore.txt
+    else:
+        highscore_file = open('highscore.txt', 'a')
+        highscore_file.write('\n' + player_name + ',' + str(score))
+        highscore_file.close()
+
+    return
+
+def clear_highscore():
+    # Clears highscore.txt
+    highscore_file = open('highscore.txt', 'w')
+    print(file = highscore_file)
+    highscore_file.close()
+
+    return
+
+def retrieve_highscorelist():
+
+    # Reads the file and sorts it
+    highscore_file = open('highscore.txt', 'r')
+    highscore = []
+
+    for row in highscore_file.read().split('\n'):
+        highscore.append(row.split(','))
+
+    highscore_file.close()
+
+    highscore.sort(key = lambda x: float(x[1]), reverse = True)
+
+    return highscore
+
+def create_score_table(values):
+
+    # Creates the score_table to be shown at the end
+    global score_table
+
+    scoreboard_values = values
+    score_table = []
+
+    rank = 1
+    entries = 0
+
+    while entries < 10 and entries <= (len(scoreboard_values)):
+        text = "{} | Score:{}".format(scoreboard_values[rank][0], scoreboard_values[rank-1][1])
+        entry_diplay = uvage.from_text(scoreboard.x, scoreboard.top - 20 + 40 * rank, text, 40, "black")
+        score_table.append(entry_diplay)
+        rank += 1
+        entries += 1
+
+    return
+
+# Collectibles -------------------------------
+
+def handle_coin():
+    global score, coin
+
+    camera.draw(coin)
+
+    if coin.touches(snake_head):
+        coin = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), r'Snake Sprite Sheets\coin.png')
+        score += 100
+
+    return
+
+def handle_freeze():
+    global score, tick_rate, freeze
+
+    freeze.size = [50, 100]
+    camera.draw(freeze)
+
+    if freeze.touches(snake_head):
+        freeze_image = uvage.load_sprite_sheet(r'Snake Sprite Sheets\freeze_float.png', 2, 3)
+        freeze = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), freeze_image[-1])
+        tick_rate*.5 
+#IMPORTANT-------- figure out how to slow down by half for ONLY 5 SECS..? ---------
+
+    return
+
+def handle_double():
+    global score, double
+
+    double.size = [50, 100]
+    camera.draw(double)
+
+    if double.touches(snake_head):
+        double_score = uvage.load_sprite_sheet(r'Snake Sprite Sheets\2xscore_float.png', 2, 3)
+        double = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), double_score[-1])
+        score += 200
+
+    return
+
+def handle_apple():
+    global score, apple, apple_image, current_frame, snake_list, snake_body, snake_head
+
+    apple = uvage.from_image(apple.x, apple.y, apple_image[current_frame %9])
+    apple.size = [50, 50]
+    camera.draw(apple)
+
+    if apple.touches(snake_head):
+        apple = uvage.from_image(randrange(50, 550, 50), randrange(50, 550, 50), apple_image[0])
+        apple.size = [50, 50]
+        score += 100
+        # Adds another position tracker to the snake
+        snake_list.append(list((snake_head.x, snake_head.y)))
+    else:
+        snake_list.pop()
+
+
+    return
 
 def score_display():
-	global score
-	score = (length_of_snake - 1)
-	camera.draw("Score: " + str(int(score)), 36, "black", 65, 30) #displays the score while they're playing the game
+    global score
+
+    camera.draw("Score: " + str(int(score)), 36, "white", 300, 50)  # displays the score while they're playing the game
+
+# Snake --------------------------------
+
+def handle_snake():
+    global facing_right, facing_up, direction, game_over, change_to, snake_list, snake_head
+
+    if game_over == True:
+        snake_head.xspeed = 0
+        snake_head.yspeed = 0
+
+    if game_on == True:
+
+        if snake_head.x < 0 or snake_head.x > 600 or snake_head.y < 0 or snake_head.y > 600:
+            game_over = True
+            store_highscore()
+
+        if uvage.is_pressing("up arrow"):
+            change_to = 'UP'
+
+        elif uvage.is_pressing("down arrow"):
+            change_to = 'DOWN'
+
+        elif uvage.is_pressing("left arrow"):
+            change_to = 'LEFT'
+
+        elif uvage.is_pressing("right arrow"):
+            change_to = 'RIGHT'
+
+        if change_to == 'UP' and direction != 'DOWN':
+            direction = 'UP'
+            snake_head = uvage.from_image(snake_head.x, snake_head.y, r'Snake Sprite Sheets\snake eat up.png')
+        if change_to == 'DOWN' and direction != 'UP':
+            direction = 'DOWN'
+            snake_head = uvage.from_image(snake_head.x, snake_head.y, r'Snake Sprite Sheets\snake eat down.png')
+        if change_to == 'LEFT' and direction != 'RIGHT':
+            direction = 'LEFT'
+            snake_head = uvage.from_image(snake_head.x, snake_head.y, r'Snake Sprite Sheets\snake eat left.png')
+        if change_to == 'RIGHT' and direction != 'LEFT':
+            direction = 'RIGHT'
+            snake_head = uvage.from_image(snake_head.x, snake_head.y, r'Snake Sprite Sheets\snake eat right.png')
+
+        if direction == 'UP':
+            snake_head.y -= 20
+        if direction == 'DOWN':
+            snake_head.y += 20
+        if direction == 'LEFT':
+            snake_head.x -= 20
+        if direction == 'RIGHT':
+            snake_head.x += 20
+
+        snake_head.size = [30 ,30]
+        camera.draw(snake_head)
+
+        # Constantly Updates the Location of the Snake with Insert & Pop
+        snake_list.insert(0, list((snake_head.x, snake_head.y)))
+
+        for position in snake_list[1:]:
+            body = uvage.from_image(position[0], position[1], r'Snake Sprite Sheets\snake_body.png')
+            body.size = [50 ,50]
+
+            camera.draw(body)
+
+        for position in snake_list[1:]:
+            if snake_head.contains(position):
+                game_over = True
+                store_highscore()
 
 
-def snake_movement():
-    global facing_right, facing_up
+    return
 
-#Need to figure out how to make the snake move continously in one direction until told otherwise
 
-    if uvage.is_pressing("right arrow"):
-        if not facing_right:        #if not facing right it flips it so that it is
-            facing_right = True
-            snake.flip()
-        snake.x += 10
-        snake.y -= 0
-    elif uvage.is_pressing("left arrow"):
-        if facing_right:            #flips snake body to be facing in the left direction
-            facing_right = False
-            snake.flip()
-        snake.x -= 10
-        snake.y += 0
-    elif uvage.is_pressing("up arrow"):
-        if not facing_up:   #IMPORTANT: Still needs work, can't figure out how to flip/rotate up and down---------
-            facing_up = True
-            snake.rotate(180)
-            snake.flip()
-        snake.y -= 10
-        snake.x += 0
-    elif uvage.is_pressing("down arrow"):
-        if facing_up:   #IMPORTANT: Still needs work, can't figure out how to flip/rotate up and down---------
-            facing_up = False
-            snake.rotate(180)
-            snake.flip()
-        snake.y += 10
-        snake.x -= 0
+# Restart -----------------------------------------
+def handle_gameover():
+    global game_over, game_on, game_over_screen, scoreboard_values
 
-#everything after here is kinda janky
+    scoreboard_values = retrieve_highscorelist()
+    create_score_table(scoreboard_values)
+    game_on = False
 
-def game(keys):
-    global game_on, game_over, score, apple_x, apple_y, snake, length_of_snake
-    snake_x = 1
-    snake_y = 1
+    return
 
-    apple_x = random.randint(20, 800 / 2)
-    apple_y = random.randint(20, 800 / 2)
-    head = []
+def handle_gameover_screen():
+    global game_over, game_on, game_over_screen, score_table
+
+    camera.draw(scoreboard)
+    camera.draw(button)
+    camera.draw("Close", 36, "white", 300, 500)
+    for row in score_table:
+        camera.draw(row)
+    if button.contains(camera.mouse) and camera.mouseclick == True:
+        camera.clear('light blue')
+        restart_game()
+        game_over = False
+
+
+    return
+
+def restart_game():
+    global score, snake_list, snake_head, direction, change_to
+
+    score = 0
+
+    snake_head.x = 300
+    snake_head.y = 300
+
+    direction = 'RIGHT'
+    change_to = direction
+
+    snake_list = [[300, 300],
+                  [290, 300],
+                  [280, 300],
+                  [270, 300]
+                  ]
+
+    return
+
+# Game Code ----------------------------------------------------------------
+
+def game():
+    global snake, current_frame, game_on
+
+    camera.clear('light blue')
 
     if game_on == False:
-        camera.draw(snake)
-        camera.draw(apple)
-        snake_movement()
+        camera.draw("Hit Space to Start!", 80, "white", 300, 300)
+
+    if uvage.is_pressing('space'):
+        game_on = True
+
+    if game_on == True:
+        score_display()
+        handle_snake()
+        handle_apple()
+        handle_coin()
+        handle_double()
+        handle_freeze()
+        current_frame += 1
+
+    if game_over == True:
+        handle_gameover()
+        handle_gameover_screen()
+
     camera.display()
+    return
 
-
-#don't rlly know whats going on here... so ignore unless it seems helpful
-"""
-    if snake.left_touches(apple) or snake.right_touches(apple) or snake.bottom_touches(apple) or snake.top_touches(apple):
-        length_of_snake += 1
-        #not really sure what to do with this part...?
-
-    if len(snake_list) > length_of_snake:
-        del snake_list[0]
-
-    if head in snake_list[:-1]:
-        game_over = True
-
-    if snake_x < 0 or snake_x > 800 or snake_y < 0 or snake_y > 800:
-        game_over = True
-
-    x1 = 800 / 2
-    y1 = 800 / 2
-
-    if x1 >= 800 or x1 < 0 or y1 >= 800 or y1 < 0:
-        game_over = True
-
-    x1 += snake.x
-    y1 += snake.y
-
-    camera.draw(apple)
-    snake_head = []
-    snake_head.append(x1)
-    snake_head.append(y1)
-    snake_list.append(snake_head)
-    if len(snake_list) > length_of_snake:
-        del snake_list[0]
-
-        for x in snake_list[:-1]:
-            if x == snake_head:
-                game_close = True
-"""
-
-
-if game_over == True:
-    camera.draw("GAME OVER", 50, 'red', 150, 250)
-
-camera.clear("light blue")
-camera.draw(snake)
-"""
-handle_coin()
-handle_gameover()
-handle_gameover_screen()
-"""
-score_display()
-camera.display()
 
 # Run Game ----------------------------------------------------------------
-uvage.timer_loop(30, game)
+uvage.timer_loop(tick_rate, game)
+
