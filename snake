@@ -93,6 +93,7 @@ def game(keys):
     camera.display()
 
 
+#don't rlly know whats going on here... so ignore unless it seems helpful
 """
     if snake.left_touches(apple) or snake.right_touches(apple) or snake.bottom_touches(apple) or snake.top_touches(apple):
         length_of_snake += 1
@@ -126,7 +127,8 @@ def game(keys):
 
         for x in snake_list[:-1]:
             if x == snake_head:
-                game_close = True"""
+                game_close = True
+"""
 
 
 if game_over == True:
